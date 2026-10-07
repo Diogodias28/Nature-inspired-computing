@@ -1,267 +1,193 @@
-<h3 align="center">Universidade do Minho <br> Mestrado em Inteligência Artificial <br> Computação Inspirada na Natureza <br> 2024/2025 </h3>
+# Multimodal Route Planning with MOEA/D
+
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![NetworkX](https://img.shields.io/badge/NetworkX-Graph%20modelling-BD4F00)](https://networkx.org/)
+[![NumPy](https://img.shields.io/badge/NumPy-Numerical%20computing-013243?logo=numpy&logoColor=white)](https://numpy.org/)
+[![pandas](https://img.shields.io/badge/pandas-Data%20processing-150458?logo=pandas&logoColor=white)](https://pandas.pydata.org/)
+[![Matplotlib](https://img.shields.io/badge/Matplotlib-Visualisation-11557C)](https://matplotlib.org/)
+
+<h3 align="center">University of Minho<br>Master's Degree in Artificial Intelligence<br>Nature-Inspired Computing<br>2024/2025</h3>
 
 ---
 
-<h3 align="center"> Colaboradores </h3>
+<h3 align="center">Contributors</h3>
 
 <div align="center">
 
-| Nome                    | Número |
-|-------------------------|--------|
-| Diogo José Borges Dias  | PG60245 |
-| Diogo Lopes Azevedo     | PG61217 |
+| Name | Number |
+|---|---|
+| Diogo José Borges Dias | PG60245 |
+| Diogo Lopes Azevedo | PG61217 |
 
 </div>
 
----
+### Project summary
 
-## Estrutura do Projeto
+This project addresses multimodal route planning in the Greater Porto public transport
+network. It builds a directed graph from Metro do Porto and STCP GTFS data, adds
+walking connections between nearby stops, and uses the MOEA/D evolutionary algorithm
+to approximate routes that balance total travel time against CO₂ emissions. The
+pipeline also generates test scenarios, evaluates the optimisation results, and
+provides static, interactive, and spatial visualisations of the network and its
+Pareto front.
+
+## Main features and technical architecture
+
+- **GTFS ingestion and graph construction** (`src/graph.py`)
+  - Loads Metro do Porto and STCP stops and stop times from `data/gtfs/`.
+  - Builds a `networkx.MultiDiGraph` with Metro, bus, and walking edges.
+  - Stores travel time, distance, transport mode, and estimated CO₂ emissions on
+    each edge.
+  - Connects nearby stops using Haversine distance and a walking-speed model.
+- **Multi-objective optimisation** (`src/moead.py`, `src/main.py`)
+  - Uses MOEA/D with weighted decomposition, neighbourhoods, Tchebycheff-style
+    scalarisation, graph-aware crossover, and mutation.
+  - Evaluates valid routes according to travel time and CO₂ emissions.
+  - Applies constraints for transfers and walking time.
+  - Produces an approximate Pareto front and representative extreme solutions.
+- **Scenario generation and evaluation** (`src/scenarios.py`,
+  `src/evaluate_scenarios.py`)
+  - Generates nine scenarios across easy, medium, and difficult distance ranges.
+  - Reports Pareto-front size, travel-time statistics, CO₂ statistics, runtime,
+    and generation counts.
+- **Result visualisation**
+  - `src/visualize.py` generates analysis figures in `figures/`.
+  - `src/interactive_pareto.py` provides a Matplotlib-based explorer for
+    selecting solutions and inspecting route details.
+  - `src/export_graph_html.py` exports the multimodal graph to an interactive
+    Leaflet HTML map at `output/graph.html`.
+
+## Project structure
 
 ```text
 .
 ├── data/
-│   ├── gtfs/
-│   │   ├── mdp/              # Dados GTFS do Metro do Porto
-│   │   └── stcp/             # Dados GTFS da STCP
-│   ├── output/
-│   │   ├── graph_base.gpickle
-│   │   ├── moead_results.pkl
-│   │   └── pareto_front.csv
-│
-├── figures/                  # Figuras geradas para o relatório
-│   ├── pareto_front.png
-│   ├── tradeoff_extremes.png
-│   ├── pareto_convergence.png
-│   ├── time_distribution.png
-│   ├── Figure_2.png
-│   ├── Figure_1.png
-|   ├── graph_spatial.png
-|   └── hypervolume_over_generations.png
-│
-├── output/
-│   ├── graph_base.gpickle
-│   ├── moead_results.pkl
-│   ├── pareto_front.csv
-│   ├── evaluation_results.pkl
-│   ├── evaluation_results.csv
-│   ├── scenarios.pkl
-│   ├── scenarios.csv
-│   └── graph.html
-│
-├── src/                 
-│   ├── graph.py          # Construção do grafo multimodal
-│   ├── moead.py
-│   ├── export_graph_html.py
-│   ├── main.py
-│   ├── scenarios.py
-│   ├── evaluate_scenarios.py
-│   ├── interactive_pareto.py
-│   └── visualize.py
-│
+│   └── gtfs/
+│       ├── mdp/              # Metro do Porto GTFS data
+│       └── stcp/             # STCP GTFS data
+├── figures/                  # Figures generated for the report
+├── output/                   # Generated graphs, results, scenarios, and HTML
+├── src/
+│   ├── graph.py             # Multimodal graph construction
+│   ├── moead.py             # MOEA/D implementation and route evaluation
+│   ├── export_graph_html.py # Interactive graph export
+│   ├── main.py              # Main optimisation pipeline
+│   ├── scenarios.py         # Scenario generation
+│   ├── evaluate_scenarios.py# Scenario evaluation
+│   ├── interactive_pareto.py# Interactive Pareto-front explorer
+│   └── visualize.py         # Result visualisation
 └── README.md
-
 ```
 
-## Dependências
+## Installation and usage
 
-O projeto foi desenvolvido em Python 3.10.19. As principais dependências são:
+### Requirements
 
-* networkx
-* numpy
-* pandas
-* matplotlib
+- Python 3.10 or later (the project was developed with Python 3.10.19).
+- The GTFS files available under `data/gtfs/mdp/` and `data/gtfs/stcp/`.
 
-**Instalação das dependências:**
+### Install
+
+From the repository root, create and activate a virtual environment and install
+the dependencies used by the source files:
 
 ```bash
-pip install networkx numpy pandas matplotlib 
-
+python -m venv .venv
 ```
 
-## Construção do Grafo Multimodal
+On macOS/Linux:
 
-O ficheiro `graph.py` é responsável pela construção do grafo multimodal orientado, integrando:
+```bash
+source .venv/bin/activate
+```
 
-* Paragens de Metro
-* Paragens de Autocarro
-* Ligações pedonais entre modos diferentes
+On Windows PowerShell:
 
-As arestas do grafo incluem informação detalhada sobre:
+```powershell
+.venv\Scripts\Activate.ps1
+```
 
-* Tempo de viagem
-* Distância percorrida
-* Emissões de CO₂
-* Modo de transporte
+```bash
+python -m pip install --upgrade pip
+python -m pip install networkx numpy pandas matplotlib
+```
 
+### Build the multimodal graph
 
-**Para gerar o grafo base:**
+Run this command from the repository root:
 
 ```bash
 python src/graph.py
-
 ```
 
-O grafo é guardado em `output/graph_base.gpickle`.
+This reads the GTFS data and writes the base graph to
+`output/graph_base.gpickle`.
 
-## Exportação do Grafo para Visualização HTML
-
-O ficheiro `export_graph_html.py` gera uma visualização interativa do grafo multimodal em formato HTML.
-
-**Características principais:**
-
-* Visualização espacial da rede de transportes (Metro + STCP + Rede pedonal)
-* Representação de nós (estações/paragens) e arestas (ligações)
-* Interatividade: zoom, seleção de nós
-* Integração com informações de cada paragem
-
-**Execução:**
-
-```bash
-python src/export_graph_html.py
-
-```
-
-**Saída:**
-* `output/graph.html` - Visualização interativa do grafo
-
----
-
-## Otimização Multiobjetivo com MOEA/D
-
-O ficheiro `moead.py` contém a implementação do algoritmo MOEA/D, adaptado ao problema de planeamento de percursos em grafos.
-
-**Características principais:**
-
-* Decomposição do problema multiobjetivo em subproblemas escalares
-* Função de agregação de Tchebycheff
-* Vizinhança definida no espaço dos vetores de peso
-* Operadores genéticos específicos para grafos (crossover e mutação)
-
-Cada solução representa um caminho válido no grafo, avaliado segundo:
-
-1. Tempo total de viagem
-2. Emissões totais de CO₂
-
-O algoritmo produz uma aproximação da Frente de Pareto.
-
-## Execução do Sistema
-
-O ficheiro `main.py` funciona como ponto de entrada do sistema e orquestra todas as etapas:
-
-1. Carregamento do grafo multimodal
-2. Criação de nós virtuais de origem e destino
-3. Execução do algoritmo MOEA/D
-4. Análise das soluções obtidas
-5. Exportação dos resultados
-
-**Execução:**
+### Run route optimisation
 
 ```bash
 python src/main.py
-
 ```
 
-**Resultados gerados:**
+The script prompts for the origin and destination coordinates in
+`latitude,longitude` format. It writes:
 
-* Frente de Pareto em formato CSV
-* Resultados completos em formato pickle
-* Estatísticas e análises no terminal
+- `output/moead_results.pkl` — complete optimisation results;
+- `output/pareto_front.csv` — the approximate Pareto front.
 
-## Geração de Cenários de Teste
+The graph must be built before running this command.
 
-O ficheiro `scenarios.py` permite gerar cenários de teste representativos para avaliação sistemática do algoritmo.
+### Generate scenarios and evaluate the algorithm
 
-**Características principais:**
-
-* Geração automática de 9 cenários com 3 níveis de dificuldade
-* Dificuldade baseada em distância geográfica haversine
-* Categorias: fácil (0.5-3.5 km), médio (4.0-7.0 km), difícil (8.0-17.0 km)
-
-**Execução:**
+Generate the scenario set:
 
 ```bash
 python src/scenarios.py
-
 ```
 
-**Saída:**
-* `output/scenarios.pkl` - Cenários em formato binário
-* `output/scenarios.csv` - Cenários em formato tabular (coordenadas, distâncias)
-
----
-
-## Avaliação dos cenários
-
-O ficheiro `evaluate_scenarios.py` executa uma avaliação do MOEA/D em todos os 9 cenários.
-
-**Características principais:**
-
-* Testa o algoritmo em condições variadas (diferentes distâncias e complexidade)
-* Coleta métricas agregadas: tamanho da frente de Pareto, tempos min/max/avg, emissões min/max/avg
-* Resumo por nível de dificuldade
-
-**Execução:**
+This creates `output/scenarios.pkl` and `output/scenarios.csv`. Then evaluate all
+generated scenarios:
 
 ```bash
 python src/evaluate_scenarios.py
-
 ```
 
-**Saída:**
-* `output/evaluation_results.pkl` - Resultados completos em formato binário
-* `output/evaluation_results.csv` - Estatísticas por cenário (tabulado)
+The evaluation results are written to `output/evaluation_results.pkl` and
+`output/evaluation_results.csv`.
 
----
+### Generate visualisations
 
-## Visualização dos Resultados
-
-O ficheiro `visualize.py` permite gerar os gráficos utilizados na análise experimental e no relatório, incluindo:
-
-* Frente de Pareto aproximada
-* Evolução da Frente de Pareto ao longo das gerações
-* Distribuição dos tempos de viagem
-* Evolução do Hypervolume ao longo das gerações
-* Visualização espacial da rede de transportes
-
-**Execução:**
+After running the optimisation pipeline:
 
 ```bash
 python src/visualize.py
-
 ```
 
-As figuras são guardadas na pasta `figures/`.
+The generated plots are saved under `figures/`.
 
-## Visualização Interativa de Pareto
-
-O ficheiro `interactive_pareto.py` permite explorar a frente de Pareto gerada de forma interativa.
-
-**Características principais:**
-
-* Visualização web da frente de Pareto
-* Navegação interativa entre soluções
-* Exibição de detalhes de cada rota (tempo, CO₂, modo de transporte)
-
-**Execução:**
+To inspect the Pareto front interactively:
 
 ```bash
 python src/interactive_pareto.py
-
 ```
 
-**Saída:**
-* Interface web para análise interativa dos resultados
+To export the graph as an interactive map:
 
----
+```bash
+python src/export_graph_html.py
+```
 
-## Contexto Académico
+Open `output/graph.html` in a browser. The map loads Leaflet and OpenStreetMap
+tiles from their public CDNs, so an internet connection is required when viewing
+the exported map.
 
-Este projeto foi desenvolvido no âmbito da unidade curricular **Computação Inspirada na Natureza**, do mestrado em Inteligência Artificial da Universidade do Minho.
+## Academic context and authorship
 
-Os principais conceitos abordados incluem:
+This repository was developed collaboratively by **Diogo José Borges Dias
+(PG60245)** and **Diogo Lopes Azevedo (PG61217)** as part of the *Nature-Inspired
+Computing* course in the Master's Degree in Artificial Intelligence at the
+University of Minho.
 
-* Otimização Multiobjetivo
-* Dominância de Pareto
-* Algoritmos Evolucionários
-* MOEA/D
-* Planeamento de percursos em grafos
+The work applies multi-objective optimisation, Pareto dominance, evolutionary
+algorithms, MOEA/D, graph modelling, and multimodal route planning to a
+real-world public transport network.
